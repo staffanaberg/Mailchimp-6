@@ -1,10 +1,10 @@
-package common;
+package Mailchimp;
 
 import org.junit.runner.RunWith;
 import io.cucumber.junit.CucumberOptions;
 import io.cucumber.junit.Cucumber;
 
 @RunWith(Cucumber.class)
-@CucumberOptions(features="src/test/resources/Features", glue="common", plugin={"pretty"})
+@CucumberOptions(features="src/test/resources/Features", glue= "Mailchimp", plugin={"pretty"})
 public class TestRunner {
 }
