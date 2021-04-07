@@ -1,5 +1,7 @@
 package Mailchimp;
 
+import io.cucumber.java.After;
+import io.cucumber.java.Before;
 import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
@@ -9,105 +11,106 @@ import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class StepDefinitions {
     WebDriver driver;
     Generator gen;
-    String username;
+    String generatedName;
+
+    @Before
+    public void beforeTheTest(){
+        // Create generated name
+        gen = new Generator();
+        generatedName = gen.unixTime() + gen.letter();
+    }
 
     @Given("Navigated to the site")
-    public void navigated_to_the_site() throws InterruptedException {
+    public void navigated_to_the_site()  {
         System.setProperty("webdriver.chrome.driver", "C:\\Program Files\\Selenium\\chromedriver.exe");
         driver = new ChromeDriver();
         driver.get("https://login.mailchimp.com/signup/");
         driver.manage().window().maximize();
     }
 
+
+    // EMAIL
     @And("write an email")
-    public void write_an_email() throws InterruptedException {
-        // Create user
-        gen = new Generator();
-        username = gen.unixTime() + gen.letter();
-
+    public void write_an_email()  {
         WebElement emailBox = driver.findElement(By.cssSelector("input[type=email][id=email]"));
-        emailBox.sendKeys(username + "@hotmail.com");
+        emailBox.sendKeys(generatedName + "@hotmail.com");
     }
 
+    @And("write an no email")
+    public void writeNoEmail() {
+    }
+
+
+    // USERNAME
     @Given("write an username")
-    public void write_an_username() throws InterruptedException {
+    public void write_an_username() {
         WebElement usernameBox = driver.findElement(By.cssSelector("input[type=text][id=new_username]"));
-        usernameBox.sendKeys(username);
+        usernameBox.sendKeys(generatedName);
     }
 
-    @Given("write a password")
-    public void write_a_password() throws InterruptedException {
-        WebElement passwordBox = driver.findElement(By.cssSelector("input[type=password][id=new_password]"));
-        passwordBox.sendKeys(username + "A!");
-    }
-
-    @When("press Sign Up button")
-    public void press_sign_up_button() throws InterruptedException {
-        WebElement signUpButton = driver.findElement(By.cssSelector("input[type=password][id=new_password]"));
-        signUpButton.sendKeys(Keys.ENTER);
-    }
-
-    @Then("the user is register")
-    public void the_user_is_register() throws InterruptedException {
-        Thread.sleep(3000);
-        WebElement check = driver.findElement(By.cssSelector("p[class='margin-bottom--lv5']"));
-        String actual = check.getAttribute("outerText");
-        String expected = "We’ve sent a message to " + username + "@hotmail.com" + " with a link to activate your account.";
-        assertEquals(expected, actual);
-        driver.quit();
-    }
-
-    @And("write a long username, {int} characters")
+    @And("write an username with {int} characters")
     public void writeALongUsernameCharacters(int hundreds) {
         WebElement usernameBox = driver.findElement(By.cssSelector("input[type=text][id=new_username]"));
         usernameBox.sendKeys(gen.letter().repeat(hundreds));
     }
 
-    @Then("too long username error message shows")
-    public void tooLongUsernameErrorMessageShows() throws InterruptedException {
-        Thread.sleep(3000);
-        WebElement errorMessage = driver.findElement(By.cssSelector("span[class='invalid-error']"));
-        String actual = errorMessage.getAttribute("outerText");
-        String expected = "Enter a value less than 100 characters long";
-        assertEquals(expected, actual);
-        driver.quit();
-    }
-
-    @And("write an already taken username")
+    @And("write an taken username")
     public void writeAnAlreadyTakenUsername() {
         WebElement usernameBox = driver.findElement(By.cssSelector("input[type=text][id=new_username]"));
         usernameBox.sendKeys("takenUsername");
     }
 
 
-    @Then("name already exists error message shows")
-    public void nameAlreadyExistsErrorMessageShows() throws InterruptedException {
-        WebElement errorMessage = driver.findElement(By.cssSelector("span[class='invalid-error']"));
-        String actual = errorMessage.getAttribute("outerText");
-        String expected = "Another user with this username already exists. Maybe it's your evil twin. Spooky.";
-        assertEquals(expected, actual);
-        driver.quit();
+    // PASSWORD
+    @Given("write a password")
+    public void write_a_password()  {
+        WebElement passwordBox = driver.findElement(By.cssSelector("input[type=password][id=new_password]"));
+        passwordBox.sendKeys(generatedName + "A!");
     }
 
-    @And("write no email")
-    public void writeNoEmail() {
-        gen = new Generator();
-        username = gen.unixTime() + gen.letter();
+
+    // SIGN UP BUTTON
+    @When("press Sign Up button")
+    public void press_sign_up_button() {
+        WebElement signUpButton = driver.findElement(By.cssSelector("input[type=password][id=new_password]"));
+        signUpButton.sendKeys(Keys.ENTER);
     }
 
-    @Then("no email error message shows")
-    public void noEmailErrorMessageShows() throws InterruptedException {
-        Thread.sleep(3000);
+
+    // MESSAGE
+    @Then("{string} is visible for user")
+    public void messageIsVisibleForUser(String message) {
         WebElement errorMessage = driver.findElement(By.cssSelector("span[class='invalid-error']"));
+
+        WebDriverWait wait = new WebDriverWait(driver, 10);
+        wait.until(ExpectedConditions.visibilityOf(errorMessage));
+
         String actual = errorMessage.getAttribute("outerText");
-        String expected = "Please enter a value";
+        assertEquals(message, actual);
+    }
+
+    @Then("approved message is visible for user")
+    public void messageIsVisibleForUser() {
+        WebElement approvedMessage = driver.findElement(By.cssSelector("p[class='margin-bottom--lv5']"));
+
+        WebDriverWait wait = new WebDriverWait(driver, 10);
+        wait.until(ExpectedConditions.visibilityOf(approvedMessage));
+
+        String actual = approvedMessage.getAttribute("outerText");
+        String expected = "We’ve sent a message to " + generatedName + "@hotmail.com" + " with a link to activate your account.";
         assertEquals(expected, actual);
+    }
+
+    @After
+    public void afterTheTest() {
         driver.quit();
     }
 }
