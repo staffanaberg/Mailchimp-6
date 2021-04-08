@@ -21,25 +21,35 @@ public class StepDefinitions {
     Generator gen;
     String generatedName;
 
+    public void waitABit(WebElement webElement) {
+        WebDriverWait wait = new WebDriverWait(driver, 10);
+        wait.until(ExpectedConditions.visibilityOf(webElement));
+    }
+
     @Before
-    public void beforeTheTest(){
+    public void beforeTheTest() {
         // Create generated name
         gen = new Generator();
         generatedName = gen.unixTime() + gen.letter();
     }
 
     @Given("Navigated to the site")
-    public void navigated_to_the_site()  {
+    public void navigated_to_the_site() {
         System.setProperty("webdriver.chrome.driver", "C:\\Program Files\\Selenium\\chromedriver.exe");
         driver = new ChromeDriver();
         driver.get("https://login.mailchimp.com/signup/");
         driver.manage().window().maximize();
+
+        // Reject cookies
+        WebElement rejectCookiesButton = driver.findElement(By.cssSelector("button[id=onetrust-reject-all-handler]"));
+        waitABit(rejectCookiesButton);
+        rejectCookiesButton.click();
     }
 
 
     // EMAIL
     @And("write an email")
-    public void write_an_email()  {
+    public void write_an_email() {
         WebElement emailBox = driver.findElement(By.cssSelector("input[type=email][id=email]"));
         emailBox.sendKeys(generatedName + "@hotmail.com");
     }
@@ -71,7 +81,7 @@ public class StepDefinitions {
 
     // PASSWORD
     @Given("write a password")
-    public void write_a_password()  {
+    public void write_a_password() {
         WebElement passwordBox = driver.findElement(By.cssSelector("input[type=password][id=new_password]"));
         passwordBox.sendKeys(generatedName + "A!");
     }
@@ -89,10 +99,7 @@ public class StepDefinitions {
     @Then("{string} is visible for user")
     public void messageIsVisibleForUser(String message) {
         WebElement errorMessage = driver.findElement(By.cssSelector("span[class='invalid-error']"));
-
-        WebDriverWait wait = new WebDriverWait(driver, 10);
-        wait.until(ExpectedConditions.visibilityOf(errorMessage));
-
+        waitABit(errorMessage);
         String actual = errorMessage.getAttribute("outerText");
         assertEquals(message, actual);
     }
@@ -100,10 +107,7 @@ public class StepDefinitions {
     @Then("approved message is visible for user")
     public void messageIsVisibleForUser() {
         WebElement approvedMessage = driver.findElement(By.cssSelector("p[class='margin-bottom--lv5']"));
-
-        WebDriverWait wait = new WebDriverWait(driver, 10);
-        wait.until(ExpectedConditions.visibilityOf(approvedMessage));
-
+        waitABit(approvedMessage);
         String actual = approvedMessage.getAttribute("outerText");
         String expected = "We’ve sent a message to " + generatedName + "@hotmail.com" + " with a link to activate your account.";
         assertEquals(expected, actual);
